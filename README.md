@@ -1,6 +1,6 @@
 # DSE Cal-Adapt Climate Pipeline (Luigi branch)
 
-Same climate data pipeline, but the extraction workflow is now a resumable Luigi pipeline instead of a notebook. If it crashes, just re-run and it picks up where it left off.
+Pull downscaled climate projections (LOCA2, 3km) for any US national park via a resumable Luigi pipeline. If it crashes, just re-run and it picks up where it left off.
 
 ## Setup
 
@@ -12,46 +12,58 @@ You need Docker Desktop and VS Code with the Dev Containers extension.
 # first time takes ~8 min, after that it's instant
 ```
 
-## Finding parks
-
-Use the ParkCatalog Demo notebook or a quick python shell to fuzzy search:
-
-```python
-from andrewAdaptLibrary import ParkCatalog
-catalog = ParkCatalog("USA_National_Park_Service_Lands_.../USA_Federal_Lands.shp")
-catalog.search("yosemite")  # finds exact name to use
-```
-
-Then add the park to `pipelines/config.py` under `PARKS` and `PARK_SHORT`.
-
 ## Running the pipeline
 
-From the container terminal (VS Code terminal or `./docker/run_docker.sh shell`):
+From the VS Code terminal (inside the container):
 
 ```bash
-python run_pipeline.py                          # all parks in config
-python run_pipeline.py --parks JoshuaTree       # just one park
-python run_pipeline.py --parks JoshuaTree Mojave --workers 4
+# required: park name (fuzzy searched), --variable, --scenario
+python run_pipeline.py "joshua tree" --variable T_Max --scenario historical
+python run_pipeline.py "yosemite" --variable Precip --scenario all
+python run_pipeline.py "mojave" --variable all --scenario ssp585
+python run_pipeline.py "grand canyon" --variable T_Max --scenario historical --output plot
 ```
 
-Output CSVs land in `data/csv/full_extraction/`. Re-running skips anything already done.
+The pipeline fuzzy searches your park name and tells you what it found:
+```
+Found: "Joshua Tree National Park"
+Park:      Joshua Tree National Park (JoshuaTree)
+Variables: ['T_Max']
+Scenarios: ['Historical Climate']
+```
+
+## Flags
+
+| Flag | Options | Required? |
+|------|---------|-----------|
+| `park` | any name, fuzzy searched | yes |
+| `--variable` | T_Max, T_Min, Precip, all | yes |
+| `--scenario` | historical, ssp245, ssp370, ssp585, all | yes |
+| `--timescale` | monthly, daily, yearly | no (default: monthly) |
+| `--output` | csv, plot | no (default: csv) |
+| `--workers` | number | no (default: 4) |
+
+CSVs go to `data/csv/{ParkName}/`. Plots go to `data/plots/`.
+
+## Finding parks
+
+You can also search interactively:
+
+```bash
+python -c "
+from andrewAdaptLibrary import ParkCatalog
+catalog = ParkCatalog('USA_National_Park_Service_Lands_20170930_4993375350946852027/USA_Federal_Lands.shp')
+print(catalog.search('yosemite'))
+"
+```
 
 ## Notebooks
 
-The notebooks still work for exploration and plotting:
+Still here for exploration and plotting:
 
 | Notebook | What it does |
 |----------|-------------|
 | `Tutorial_Coiled_Setup` | Setup walkthrough + learning the library |
 | `ParkCatalog_Demo` | Fuzzy search parks, check data availability |
 | `Spatial_Comparison` | 2x2 spatial heatmaps comparing scenarios |
-
-`Full_Data_Extraction` is still there but the pipeline replaces it for production runs.
-
-## Pipeline structure
-
-```
-run_pipeline.py          <- entry point, starts Coiled cluster
-pipelines/config.py      <- parks, variables, scenarios to extract
-pipelines/climate_extraction.py  <- Luigi tasks (fetch, combine, compute T_Avg)
-```
+| `Full_Data_Extraction` | Original notebook version (pipeline replaces this) |
