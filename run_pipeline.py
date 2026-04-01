@@ -107,40 +107,54 @@ def main():
     print(f"Output:    {args.output}")
     print()
 
-    # Start Coiled cluster
-    import coiled
-    print(f"Starting Coiled cluster ({args.workers} workers)...")
+    # Check if all CSVs already exist (skip Coiled if so)
+    from pipelines.config import OUTPUT_DIR
+    all_csvs_exist = all(
+        os.path.exists(os.path.join(OUTPUT_DIR, short_name, f"{var}_{scen.replace(' ', '_')}.csv"))
+        for var in variables
+        for scen in scenarios
+    )
+
     t0 = time.perf_counter()
+    cluster = None
 
-    cluster = coiled.Cluster(
-        name=f"extract-{short_name.lower()}",
-        region=COILED_REGION,
-        n_workers=args.workers,
-        worker_memory=COILED_WORKER_MEMORY,
-        spot_policy="spot_with_fallback",
-        idle_timeout="20 minutes",
-        package_sync=True,
-    )
-    client = cluster.get_client()
-    print(f"Cluster ready in {time.perf_counter() - t0:.0f}s "
-          f"({len(client.scheduler_info()['workers'])} workers)\n")
+    if all_csvs_exist and args.output != "plot":
+        print("All CSVs already exist — skipping Coiled cluster.\n")
+        success = True
+    else:
+        # Start Coiled cluster
+        import coiled
+        print(f"Starting Coiled cluster ({args.workers} workers)...")
 
-    # Run Luigi pipeline
-    import luigi
-    from pipelines.climate_extraction import ExtractionPipeline, set_cluster
+        cluster = coiled.Cluster(
+            name=f"extract-{short_name.lower()}",
+            region=COILED_REGION,
+            n_workers=args.workers,
+            worker_memory=COILED_WORKER_MEMORY,
+            spot_policy="spot_with_fallback",
+            idle_timeout="20 minutes",
+            package_sync=True,
+        )
+        client = cluster.get_client()
+        print(f"Cluster ready in {time.perf_counter() - t0:.0f}s "
+              f"({len(client.scheduler_info()['workers'])} workers)\n")
 
-    set_cluster(cluster)
+        # Run Luigi pipeline
+        import luigi
+        from pipelines.climate_extraction import ExtractionPipeline, set_cluster
 
-    success = luigi.build(
-        [ExtractionPipeline(
-            park=park_name,
-            variables=variables,
-            scenarios=scenarios,
-            timescale=args.timescale,
-        )],
-        local_scheduler=True,
-        log_level="INFO",
-    )
+        set_cluster(cluster)
+
+        success = luigi.build(
+            [ExtractionPipeline(
+                park=park_name,
+                variables=variables,
+                scenarios=scenarios,
+                timescale=args.timescale,
+            )],
+            local_scheduler=True,
+            log_level="INFO",
+        )
 
     # Plot mode: generate spatial heatmap after extraction
     if args.output == "plot" and success:
@@ -221,7 +235,8 @@ def main():
             plt.close(fig)
             print(f"  Saved: {plot_path}")
 
-    cluster.close()
+    if cluster:
+        cluster.close()
     print(f"\nPipeline {'succeeded' if success else 'FAILED'}")
     print(f"Total time: {time.perf_counter() - t0:.0f}s")
 
