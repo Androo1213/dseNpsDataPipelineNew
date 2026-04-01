@@ -83,8 +83,8 @@ class FetchClimateTask(luigi.Task):
         df = data[self.variable]
         df["park"] = to_short_name(self.park)
 
-        with self.output().open("w") as f:
-            df.to_csv(f, index=False)
+        out_path = self.output().path
+        df.to_csv(out_path, index=False)
 
 
 class ComputeTAvgTask(luigi.Task):
@@ -113,17 +113,14 @@ class ComputeTAvgTask(luigi.Task):
         )
 
     def run(self):
-        with self.input()["T_Max"].open("r") as f:
-            tmax = pd.read_csv(f)
-        with self.input()["T_Min"].open("r") as f:
-            tmin = pd.read_csv(f)
+        tmax = pd.read_csv(self.input()["T_Max"].path)
+        tmin = pd.read_csv(self.input()["T_Min"].path)
 
         merge_cols = ["simulation", "time", "scenario", "timescale", "park"]
         merged = tmax.merge(tmin[merge_cols + ["T_Min"]], on=merge_cols)
         merged["T_Avg"] = (merged["T_Max"] + merged["T_Min"]) / 2
 
-        with self.output().open("w") as f:
-            merged.to_csv(f, index=False)
+        merged.to_csv(self.output().path, index=False)
 
 
 class ExtractionPipeline(luigi.WrapperTask):
