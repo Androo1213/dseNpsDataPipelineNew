@@ -40,10 +40,14 @@ Scenarios: ['Historical Climate']
 | `--variable` | T_Max, T_Min, Precip, all | yes |
 | `--scenario` | historical, ssp245, ssp370, ssp585, all | yes |
 | `--timescale` | monthly, daily, yearly | no (default: monthly) |
-| `--output` | csv, plot | no (default: csv) |
+| `--output` | csv, plot, timeseries | no (default: csv) |
 | `--workers` | number | no (default: 4) |
 
 CSVs go to `data/csv/{ParkName}/`. Plots go to `data/plots/`.
+
+- `csv` — raw data as CSV files
+- `plot` — spatial heatmap (requires extra Coiled fetch for gridded data)
+- `timeseries` — line chart from the CSVs (no extra Coiled, just reads what was fetched)
 
 ## Finding parks
 

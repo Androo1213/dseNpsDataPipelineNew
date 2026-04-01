@@ -83,8 +83,8 @@ def main():
     )
     parser.add_argument(
         "--output", default="csv",
-        choices=["csv", "plot"],
-        help="Output format (default: csv)",
+        choices=["csv", "plot", "timeseries"],
+        help="Output format: csv (default), plot (spatial heatmap), timeseries (line chart from CSV)",
     )
     parser.add_argument(
         "--workers", type=int, default=COILED_N_WORKERS,
@@ -173,6 +173,53 @@ def main():
         fig.savefig(plot_path, dpi=150, bbox_inches="tight")
         plt.close(fig)
         print(f"Saved: {plot_path}")
+
+    # Timeseries mode: plot from the CSVs that were just created (no extra Coiled)
+    if args.output == "timeseries" and success:
+        print("\nGenerating timeseries plot from CSVs...")
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        import pandas as pd
+
+        os.makedirs(PLOT_DIR, exist_ok=True)
+
+        for var in variables:
+            # Collect all scenario CSVs for this variable
+            all_dfs = []
+            for scenario in scenarios:
+                scen_short = scenario.replace(" ", "_")
+                csv_path = os.path.join(
+                    OUTPUT_DIR, short_name, f"{var}_{scen_short}.csv"
+                )
+                if os.path.exists(csv_path):
+                    all_dfs.append(pd.read_csv(csv_path))
+
+            if not all_dfs:
+                print(f"  No CSVs found for {var}, skipping")
+                continue
+
+            df = pd.concat(all_dfs, ignore_index=True)
+            df["time"] = pd.to_datetime(df["time"])
+
+            # Ensemble mean per scenario per month
+            grouped = df.groupby(["scenario", "time"])[var].mean().reset_index()
+
+            fig, ax = plt.subplots(figsize=(12, 5))
+            for scenario, sdf in grouped.groupby("scenario"):
+                sdf = sdf.sort_values("time")
+                ax.plot(sdf["time"], sdf[var], label=scenario, alpha=0.8)
+
+            ax.set_title(f"{park_name} — {var} (ensemble mean)")
+            ax.set_ylabel(var)
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            fig.tight_layout()
+
+            plot_path = os.path.join(PLOT_DIR, f"{short_name}_{var}_timeseries.png")
+            fig.savefig(plot_path, dpi=150, bbox_inches="tight")
+            plt.close(fig)
+            print(f"  Saved: {plot_path}")
 
     cluster.close()
     print(f"\nPipeline {'succeeded' if success else 'FAILED'}")
