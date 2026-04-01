@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dse-climate"
+version = "0.1.0"
+description = "Climate data utilities for Cal-Adapt / LOCA2 downscaled CMIP6 projections"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+dependencies = [
+    "xarray",
+    "numpy",
+    "pandas",
+    "geopandas",
+    "rioxarray",
+    "fsspec",
+    "shapely",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+coiled = ["coiled", "dask", "distributed"]
+climate = ["climakitae @ https://github.com/cal-adapt/climakitae/archive/refs/tags/1.4.0.zip"]
+all = ["dse-climate[coiled,climate]"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

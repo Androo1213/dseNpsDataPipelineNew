@@ -25,14 +25,18 @@ RUN mamba env create -f envs/py-env.yml \
     && mamba clean -afy
 
 # cpy proj code
+COPY pyproject.toml pyproject.toml
+COPY src/ src/
 COPY lib/ lib/
 COPY notebooks/ notebooks/
 COPY docker/ docker/
 COPY USA_National_Park_Service_Lands_20170930_4993375350946852027/ USA_National_Park_Service_Lands_20170930_4993375350946852027/
 
+# Install the package in editable mode
+RUN mamba run -n py-env pip install -e .
+
 # put py-env Python first on PATH so VS Code and jupyter find it
 ENV PATH="/opt/conda/envs/py-env/bin:${PATH}"
-ENV PYTHONPATH="/pipeline/lib"
 
 # gaurentee that interactive shells activate py-env
 RUN echo 'eval "$(conda shell.bash hook)" && conda activate py-env' >> /root/.bashrc

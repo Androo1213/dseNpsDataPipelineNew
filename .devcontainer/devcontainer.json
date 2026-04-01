@@ -5,8 +5,7 @@
     },
     "overrideCommand": true,
     "remoteEnv": {
-        "PATH": "/opt/conda/envs/py-env/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "PYTHONPATH": "${containerWorkspaceFolder}/lib"
+        "PATH": "/opt/conda/envs/py-env/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     },
     "customizations": {
         "vscode": {
