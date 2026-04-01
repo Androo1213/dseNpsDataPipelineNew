@@ -26,6 +26,7 @@ RUN mamba env create -f envs/py-env.yml \
 
 # cpy proj code
 COPY lib/ lib/
+COPY pipelines/ pipelines/
 COPY notebooks/ notebooks/
 COPY docker/ docker/
 COPY USA_National_Park_Service_Lands_20170930_4993375350946852027/ USA_National_Park_Service_Lands_20170930_4993375350946852027/

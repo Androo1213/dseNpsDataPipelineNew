@@ -38,6 +38,8 @@ dependencies:
   - s3fs
   - fsspec
   - boto3<=1.37.3
+  # Pipeline
+  - luigi>=3.5.0
   # Utilities
   - ipywidgets>=8.1.8
   - tqdm
