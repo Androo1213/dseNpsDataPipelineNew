@@ -43,16 +43,13 @@ def fuzzy_find_park(query: str) -> str:
     catalog = ParkCatalog(NPS_SHAPEFILE)
     results = catalog.search(query)
 
-    if results is None or (hasattr(results, 'empty') and results.empty):
+    if not results:
         print(f"No parks found matching '{query}'")
         sys.exit(1)
 
-    if hasattr(results, 'iloc'):
-        match = results.iloc[0]["unit_name"]
-    else:
-        match = str(results)
-
-    print(f'Found: "{match}"')
+    # results is list of (name, score) tuples — take the top match
+    match, score = results[0]
+    print(f'Found: "{match}" (score: {score:.0f}/100)')
     return match
 
 
