@@ -937,9 +937,13 @@ def build_coiled_task(var_key: str, var_id: str, paths_list: list,
         # Unit conversion
         if var_key in ("T_Max", "T_Min", "T_Avg"):
             combined = combined - 273.15
+            combined.attrs["units"] = "°C"
+            combined.name = var_key
         elif var_key == "Precip":
             days = combined.time.dt.days_in_month
             combined = combined * 86400 * days
+            combined.attrs["units"] = "mm/month"
+            combined.name = var_key
 
         # CRS setup
         if combined.rio.crs is None:
@@ -1039,9 +1043,13 @@ def build_coiled_spatial_task(var_key: str, var_id: str, paths_list: list,
         # Unit conversion
         if var_key in ("T_Max", "T_Min", "T_Avg"):
             combined = combined - 273.15
+            combined.attrs["units"] = "°C"
+            combined.name = var_key
         elif var_key == "Precip":
             days = combined.time.dt.days_in_month
             combined = combined * 86400 * days
+            combined.attrs["units"] = "mm/month"
+            combined.name = var_key
 
         # CRS setup
         if combined.rio.crs is None:
@@ -1179,9 +1187,13 @@ def build_wrf_coiled_task(var_key: str, var_id: str, paths_list: list,
         # Unit conversion (same as LOCA2)
         if var_key in ("T_Max", "T_Min", "T_Avg"):
             combined = combined - 273.15
+            combined.attrs["units"] = "°C"
+            combined.name = var_key
         elif var_key == "Precip":
             days = combined.time.dt.days_in_month
             combined = combined * 86400 * days
+            combined.attrs["units"] = "mm/month"
+            combined.name = var_key
 
         # Load into memory (FAST — worker is in us-west-2 near S3)
         t_load_start = _time.perf_counter()
